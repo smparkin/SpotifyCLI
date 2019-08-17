@@ -259,7 +259,7 @@ def spotPP():
     if playing == False:
         r = requests.put("https://api.spotify.com/v1/me/player/play?device_id="+deviceid, headers=headers)
         if r.status_code == 204:
-            time.sleep(0.25)
+            time.sleep(0.5)
             r = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
             if r.status_code == 204:
                 print("No active playback session")

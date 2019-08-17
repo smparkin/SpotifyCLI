@@ -344,23 +344,26 @@ def spotPA():
     json = r.json()
     userid = json["id"]
 
-    r = requests.get(playlistURL+"?limit=50", headers=headers)
+    r = requests.get("https://api.spotify.com/v1/me/playlists?limit=50", headers=headers)
     json = r.json()
     j = 0
+    playdict = {}
     for i in json["items"]:
         if userid == i["owner"]["display_name"]:
             print("["+str(j)+"] "+i["name"])
+            playdict.update( {j: [i["name"], i["id"]]})
             j += 1
         elif i["collaborative"] == True:
             print("["+str(j)+"] "+i["name"])
+            playdict.update( {j: [i["name"], i["id"]]})
             j += 1
     choice = input("Select Playlist: ")
     try:
         choice = int(choice)
     except:
         quit()
-    playlistid = json["items"][choice]["id"]
-    playlistname = json["items"][choice]["name"]
+    playlistid = playdict[choice][1]
+    playlistname = playdict[choice][0]
 
     headers = {"Authorization": "Bearer "+accessToken, "Accept": "application/json", "Content-Type": "application/json"}
     r = requests.post("https://api.spotify.com/v1/playlists/"+playlistid+"/tracks?uris="+trackuri, headers=headers)

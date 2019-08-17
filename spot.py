@@ -15,9 +15,10 @@ PR: previous
 NE: next
 PP: play/pause
 LS: add to liked songs
-AP: playlist add
-RP: playlist remove
-PD: playback device
+AP: add to playlist
+RP: remove from playlist
+PD: change playback device
+LP: play playlist from saved playlists
 
 create file called secrets in same folder as spot.py with app token on line 1 and refresh token on line 2
 '''
@@ -26,7 +27,7 @@ def main():
     try:
         arg = sys.argv[1]
     except:
-        arg = input("NP: now playing\nSE: search\nSF: shuffle\nPR: previous\nNE: next\nPP: play/pause\nLS: add to liked songs\nAP: playlist add\nPD: playback device switch\nRP: playlist remove\nPL: play playlist\nChoose one: ")
+        arg = input("NP: now playing\nSE: search\nSF: shuffle\nPR: previous\nNE: next\nPP: play/pause\nLS: add to liked songs\nAP: add to playlist\nRP: remove from playlist\nPD: change playback device\nLP: play playlist from saved playlists\nChoose one: ")
     if arg == "NP":
         spotNP()
     elif arg == "SE":
@@ -50,7 +51,7 @@ def main():
     elif arg == "PL":
         spotPL()
     else:
-        print("Only use: NP, SE, SF, PR, NE, PP, LS, PA, PD")
+        print("Only use: NP, SE, SF, PR, NE, PP, LS, AP, RP, PD, PL")
         quit()
 
 def spotAuth():

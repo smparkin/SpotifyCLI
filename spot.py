@@ -108,10 +108,19 @@ def spotSE():
         print("Search returned no results")
         quit()
 
+    r = requests.get("https://api.spotify.com/v1/me/player/devices", headers=headers)
+    json = r.json()
+    try:
+        deviceid = json["devices"][0]["id"]
+        devicename = json["devices"][0]["name"]
+    except:
+        print("No playback device found")
+        quit()
+
     payload = {"uris": [trackuri]}
-    r = requests.put("https://api.spotify.com/v1/me/player/play", headers=headers, data=jsn.dumps(payload))
+    r = requests.put("https://api.spotify.com/v1/me/player/play?device_id="+deviceid, headers=headers, data=jsn.dumps(payload))
     if r.status_code == 204:
-        print("Playing \033[1m\033[95m"+trackname+"\033[0m.")
+        print("Playing \033[1m\033[95m"+trackname+"\033[0m on \033[1m\033[92m"+devicename+"\033[0m.")
     else:
         print("Unable to play \033[1m\033[95m"+trackname+"\033[0m.")
     return r.status_code

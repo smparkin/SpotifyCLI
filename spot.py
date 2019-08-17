@@ -19,6 +19,7 @@ AP: add to playlist
 RP: remove from playlist
 PD: change playback device
 LP: play playlist from saved playlists
+VL: volume
 
 create file called secrets in same folder as spot.py with app token on line 1 and refresh token on line 2
 '''
@@ -27,7 +28,7 @@ def main():
     try:
         arg = sys.argv[1]
     except:
-        arg = input("NP: now playing\nSE: search\nSF: shuffle\nPR: previous\nNE: next\nPP: play/pause\nLS: add to liked songs\nAP: add to playlist\nRP: remove from playlist\nPD: change playback device\nLP: play playlist from saved playlists\nChoose one: ")
+        arg = input("NP: now playing\nSE: search\nSF: shuffle\nPR: previous\nNE: next\nPP: play/pause\nLS: add to liked songs\nAP: add to playlist\nRP: remove from playlist\nPD: change playback device\nLP: play playlist from saved playlists\nVL: volume\nChoose one: ")
     if arg == "NP":
         spotNP()
     elif arg == "SE":
@@ -50,6 +51,8 @@ def main():
         spotPD()
     elif arg == "PL":
         spotPL()
+    elif arg == "VL":
+        spotVL()
     else:
         print("Only use: NP, SE, SF, PR, NE, PP, LS, AP, RP, PD, PL")
         quit()
@@ -600,6 +603,37 @@ def spotPL():
         print("Playing \033[1m\033[95m"+trackname+"\033[0m on \033[1m\033[92m"+devicename+"\033[0m.")
     else:
         print("Unable to play \033[1m\033[95m"+trackname+"\033[0m.")
+    return r.status_code
+
+def spotVL():
+    accessToken = spotAuth()
+    headers = {"Authorization": "Bearer "+accessToken}
+ 
+    r = requests.get("https://api.spotify.com/v1/me/player/devices", headers=headers)
+    json = r.json()
+    if len(json["devices"]) == 0:
+        print("No playback devices")
+        quit()
+    if len(json["devices"]) == 1:
+        deviceid = json["devices"][0]["id"]
+        devicename = json["devices"][0]["name"]
+    for i in json["devices"]:
+        if i["is_active"] == True:
+            deviceid = i["id"]
+            devicename = i["name"]
+
+    choice = input("Change volume on \033[1m\033[92m"+devicename+"\033[0m [0-100]: ")
+    try:
+        choice = int(choice)%101
+    except:
+        print("Only integers please.")
+        quit()
+
+    r = requests.put("https://api.spotify.com/v1/me/player/volume?volume_percent="+str(choice), headers=headers)
+    if r.status_code == 204:
+        print("Volume on \033[1m\033[92m"+devicename+"\033[0m now "+str(choice))
+    else:
+        print("No active playback devices")
     return r.status_code
 
 if __name__ == "__main__":

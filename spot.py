@@ -16,6 +16,7 @@ NE: next
 PP: play/pause
 LS: add to liked songs
 PA: playlist add
+PD: playback device
 
 create file called secrets in same folder as spot.py with app token on line 1 and refresh token on line 2
 '''
@@ -24,7 +25,7 @@ def main():
     try:
         arg = sys.argv[1]
     except:
-        arg = input("NP: now playing\nSE: search\nSF: shuffle\nPR: previous\nNE: next\nPP: play/pause\nLS: add to liked songs\nPA: playlist add\nChoose one: ")
+        arg = input("NP: now playing\nSE: search\nSF: shuffle\nPR: previous\nNE: next\nPP: play/pause\nLS: add to liked songs\nPA: playlist add\nPD: playback device\nChoose one: ")
     if arg == "NP":
         spotNP()
     elif arg == "SE":
@@ -41,8 +42,10 @@ def main():
         spotLS()
     elif arg == "PA":
         spotPA()
+    elif arg == "PD":
+        spotPD()
     else:
-        print("Only use: NP, SE, SF, PR, NE, PP, LS, PA")
+        print("Only use: NP, SE, SF, PR, NE, PP, LS, PA, PD")
         quit()
 
 def spotAuth():
@@ -62,6 +65,13 @@ def spotAuth():
 def spotNP():
     accessToken = spotAuth()
     headers = {"Authorization": "Bearer "+accessToken}
+
+    r = requests.get("https://api.spotify.com/v1/me/player/devices", headers=headers)
+    json = r.json()
+    for i in json["devices"]:
+        if i["is_active"] == True:
+            devicename = i["name"]
+
     r = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
     if r.status_code == 204:
         print("Nothing playing")
@@ -76,9 +86,10 @@ def spotNP():
     imgurl = json["item"]["album"]["images"][1]["url"]
     durationSec = (json["item"]["duration_ms"])/1000
     currentSec = (json["progress_ms"])/1000
-    print("Now Playing:")
-    print("\033[95m\033[1m"+title+"\033[0m")
-    print("\033[94m\033[1m"+artist+"\033[0m")
+    print("Playing", end=' ')
+    print("\033[95m\033[1m"+title+"\033[0m by ", end='')
+    print("\033[94m\033[1m"+artist+"\033[0m on ", end='')
+    print("\033[92m\033[1m"+devicename+"\033[0m")
     im = np.asarray(Image.open(urllib.request.urlopen(imgurl)))
     imgcat.imgcat(im)
     print(str(round(currentSec//60))+":"+(str(round(currentSec%60))).zfill(2)+"/"+str(round(durationSec//60))+":"+(str(round(durationSec%60)).zfill(2)))
@@ -358,6 +369,52 @@ def spotPA():
     else:
         print("Unable to add song to specified playlist. Do you have access to do so?")
     return r.status_code
+
+def spotPD():
+    accessToken = spotAuth()
+    headers = {"Authorization": "Bearer "+accessToken}
+
+    r = requests.get("https://api.spotify.com/v1/me/player/devices", headers=headers)
+    json = r.json()
+    if len(json["devices"]) == 0:
+        print("No playback devices")
+        quit()
+    if len(json["devices"]) == 1:
+        devicename = json["devices"][0]["name"]
+        print("\033[1m\033[92m"+devicename+"\033[0m is only device.")
+        quit()
+    j = 0
+    devicedict = {}
+    for i in json["devices"]:
+        if i["is_active"] == False:
+            print("["+str(j)+"] "+i["name"])
+            devicedict.update( {j: [i["name"], i["id"]]})
+            j += 1
+    choice = input("Choose device: ")
+    try:
+        choice = int(choice)
+    except:
+        quit()
+    deviceid = devicedict[choice][1]
+    devicename = devicedict[choice][0]
+
+    payload = {"device_ids":[deviceid]}
+    r = requests.put("https://api.spotify.com/v1/me/player", headers=headers, data=jsn.dumps(payload))
+    if r.status_code == 204:
+        time.sleep(0.5)
+        r = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
+        if r.status_code == 204:
+            print("No active playback session")
+            quit()
+        elif r.status_code != 200:
+            print("Error: HTTP"+str(r.status_code))
+            quit()
+        json = r.json()
+        trackname = json["item"]["name"]
+        trackid = json["item"]["id"]
+        print("Playing \033[1m\033[95m"+trackname+"\033[0m on \033[1m\033[92m"+devicename+"\033[0m.")
+    else:
+        print("Unable to transfer playback.")
 
 if __name__ == "__main__":
     main()

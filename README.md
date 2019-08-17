@@ -17,5 +17,5 @@ Create secrets file in same directory as script<br/>
 - NE: next
 - PP: play/pause
 - LS: add to liked songs
-- PA: playlist add
+- AP: playlist add
 - PD: playback device switch

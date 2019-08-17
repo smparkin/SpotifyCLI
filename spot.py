@@ -5,6 +5,7 @@ import numpy as np
 import imgcat
 from PIL import Image
 import sys
+import time
 
 '''
 NP: now playing
@@ -110,12 +111,27 @@ def spotSE():
 
     r = requests.get("https://api.spotify.com/v1/me/player/devices", headers=headers)
     json = r.json()
-    try:
+    deviceid = None
+    if len(json["devices"]) == 0:
+        print("No playback devices")
+        quit()
+    if len(json["devices"]) == 1:
         deviceid = json["devices"][0]["id"]
         devicename = json["devices"][0]["name"]
-    except:
-        print("No playback device found")
-        quit()
+    for i in json["devices"]:
+        if i["is_active"] == True:
+            deviceid = i["id"]
+            devicename = i["name"]
+    if deviceid == None:
+        for i in range(0,len(json["devices"])):
+            print("["+str(i)+"] "+json["devices"][i]["name"])
+        choice = input("Choose device: ")
+        try:
+            choice = int(choice)
+        except:
+            quit()
+        deviceid = json["devices"][choice]["id"]
+        devicename = json["devices"][choice]["name"]
 
     payload = {"uris": [trackuri]}
     r = requests.put("https://api.spotify.com/v1/me/player/play?device_id="+deviceid, headers=headers, data=jsn.dumps(payload))
@@ -208,31 +224,69 @@ def spotNE():
 def spotPP():
     accessToken = spotAuth()
     headers = {"Authorization": "Bearer "+accessToken}
-    r = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
-    if r.status_code == 204:
-        print("No active playback session")
-        quit()
-    elif r.status_code != 200:
-        print("Error: HTTP"+str(r.status_code))
-        quit()
+
+    r = requests.get("https://api.spotify.com/v1/me/player/devices", headers=headers)
     json = r.json()
-    trackname = json["item"]["name"]
-    trackid = json["item"]["id"]
+    deviceid = None
+    if len(json["devices"]) == 0:
+        print("No playback devices")
+        quit()
+    if len(json["devices"]) == 1:
+        deviceid = json["devices"][0]["id"]
+        devicename = json["devices"][0]["name"]
+    for i in json["devices"]:
+        if i["is_active"] == True:
+            deviceid = i["id"]
+            devicename = i["name"]
+    if deviceid == None:
+        for i in range(0,len(json["devices"])):
+            print("["+str(i)+"] "+json["devices"][i]["name"])
+        choice = input("Choose device: ")
+        try:
+            choice = int(choice)
+        except:
+            quit()
+        deviceid = json["devices"][choice]["id"]
+        devicename = json["devices"][choice]["name"]
 
     r = requests.get("https://api.spotify.com/v1/me/player", headers=headers)
-    json = r.json()
-    playing = json["is_playing"]
+    try:
+        json = r.json()
+        playing = json["is_playing"]
+    except:
+        playing = False
 
     if playing == False:
-        r = requests.put("https://api.spotify.com/v1/me/player/play", headers=headers)
+        r = requests.put("https://api.spotify.com/v1/me/player/play?device_id="+deviceid, headers=headers)
         if r.status_code == 204:
-            print("Playing \033[1m\033[95m"+trackname+"\033[0m.")
+            time.sleep(0.25)
+            r = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
+            if r.status_code == 204:
+                print("No active playback session")
+                quit()
+            elif r.status_code != 200:
+                print("Error: HTTP"+str(r.status_code))
+                quit()
+            json = r.json()
+            trackname = json["item"]["name"]
+            trackid = json["item"]["id"]
+            print("Playing \033[1m\033[95m"+trackname+"\033[0m on \033[1m\033[92m"+devicename+"\033[0m.")
         else:
             print("No active devices")
     elif playing == True:
-        r = requests.put("https://api.spotify.com/v1/me/player/pause", headers=headers)
+        r = requests.put("https://api.spotify.com/v1/me/player/pause?device_id="+deviceid, headers=headers)
         if r.status_code == 204:
-            print("Paused \033[1m\033[95m"+trackname+"\033[0m.")
+            r = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
+            if r.status_code == 204:
+                print("No active playback session")
+                quit()
+            elif r.status_code != 200:
+                print("Error: HTTP"+str(r.status_code))
+                quit()
+            json = r.json()
+            trackname = json["item"]["name"]
+            trackid = json["item"]["id"]
+            print("Paused \033[1m\033[95m"+trackname+"\033[0m on \033[1m\033[92m"+devicename+"\033[0m.")
         else:
             print("No active devices")
     return r.status_code

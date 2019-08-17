@@ -18,4 +18,4 @@ Create secrets file in same directory as script<br/>
 - PP: play/pause
 - LS: add to liked songs
 - PA: playlist add
-- PD: switch playback device
+- PD: playback device switch

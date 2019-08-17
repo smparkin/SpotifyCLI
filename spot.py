@@ -25,7 +25,7 @@ def main():
     try:
         arg = sys.argv[1]
     except:
-        arg = input("NP: now playing\nSE: search\nSF: shuffle\nPR: previous\nNE: next\nPP: play/pause\nLS: add to liked songs\nPA: playlist add\nPD: playback device\nChoose one: ")
+        arg = input("NP: now playing\nSE: search\nSF: shuffle\nPR: previous\nNE: next\nPP: play/pause\nLS: add to liked songs\nPA: playlist add\nPD: playback device switch\nChoose one: ")
     if arg == "NP":
         spotNP()
     elif arg == "SE":

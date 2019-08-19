@@ -55,7 +55,7 @@ def main():
     elif arg == "VL":
         spotVL()
     else:
-        print("Only use: NP, SE, SF, PR, NE, PP, LS, AP, RP, PD, PL")
+        print("Only use: NP, SE, SF, PR, NE, PP, LS, AP, RP, PD, LP, VL")
         quit()
 
 def spotAuth():
@@ -612,6 +612,7 @@ def spotVL():
  
     r = requests.get("https://api.spotify.com/v1/me/player/devices", headers=headers)
     json = r.json()
+    deviceid = None
     if len(json["devices"]) == 0:
         print("No playback devices")
         quit()
@@ -622,6 +623,9 @@ def spotVL():
         if i["is_active"] == True:
             deviceid = i["id"]
             devicename = i["name"]
+    if deviceid == None:
+        print("No active device")
+        quit()
 
     choice = input("Change volume on \033[1m\033[92m"+devicename+"\033[0m [0-100]: ")
     try:

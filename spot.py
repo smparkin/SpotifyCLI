@@ -627,18 +627,27 @@ def spotVL():
         print("No active device")
         quit()
 
-    choice = input("Change volume on \033[1m\033[92m"+devicename+"\033[0m [0-100]: ")
+    query = ""
+    if len(sys.argv) > 2:
+        query = sys.argv[2]
+    else:
+        query = input("Change volume on \033[1m\033[92m"+devicename+"\033[0m [0-100]: ")
     try:
-        choice = int(choice)%101
+        query = int(query)%101
     except:
         print("Only integers please.")
         quit()
 
-    r = requests.put("https://api.spotify.com/v1/me/player/volume?volume_percent="+str(choice), headers=headers)
+    r = requests.put("https://api.spotify.com/v1/me/player/volume?volume_percent="+str(query), headers=headers)
     if r.status_code == 204:
-        print("Volume on \033[1m\033[92m"+devicename+"\033[0m now "+str(choice))
+        print("Volume on \033[1m\033[92m"+devicename+"\033[0m now "+str(query))
     else:
-        print("No active playback devices")
+        json = r.json()
+        reason = json["error"]["reason"]
+        if reason == "VOLUME_CONTROL_DISALLOW":
+            print("Current device does not allow volume to be controlled through API")
+        else:
+            print("No active playback devices")
     return r.status_code
 
 if __name__ == "__main__":

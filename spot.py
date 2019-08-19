@@ -90,15 +90,26 @@ def spotNP():
         print("Error: HTTP"+str(r.status_code))
         quit()
     json = r.json()
+ 
+    r = requests.get("https://api.spotify.com/v1/me/player", headers=headers)
+    try:
+        json = r.json()
+        playing = json["is_playing"]
+    except:
+        playing = False
+
+    if playing == False:
+        text = "paused"
+    elif playing == True:
+        text = "playing" 
 
     title = json["item"]["name"]
     artist = json["item"]["album"]["artists"][0]["name"]
     imgurl = json["item"]["album"]["images"][1]["url"]
     durationSec = (json["item"]["duration_ms"])/1000
     currentSec = (json["progress_ms"])/1000
-    print("Playing", end=' ')
     print("\033[95m\033[1m"+title+"\033[0m by ", end='')
-    print("\033[94m\033[1m"+artist+"\033[0m on ", end='')
+    print("\033[94m\033[1m"+artist+"\033[0m is "+text+" on ", end='')
     print("\033[92m\033[1m"+devicename+"\033[0m")
     im = np.asarray(Image.open(urllib.request.urlopen(imgurl)))
     imgcat.imgcat(im)

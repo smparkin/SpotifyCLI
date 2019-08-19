@@ -29,7 +29,7 @@ def main():
         arg = sys.argv[1]
     except:
         arg = input("NP: now playing\nSE: search\nSF: shuffle\nPR: previous\nNE: next\nPP: play/pause\nLS: add to liked songs\nAP: add to playlist\nRP: remove from playlist\nPD: change playback device\nLP: play playlist from saved playlists\nVL: volume\nChoose one: ")
-    arg.upper()
+    arg = arg.upper()
     if arg == "NP":
         spotNP()
     elif arg == "SE":

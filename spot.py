@@ -119,14 +119,25 @@ def spotNP():
 def spotSE():
     accessToken = spotAuth()
     query = ""
-    if len(sys.argv) > 2:
-        for i in range(2, len(sys.argv)):
+    if len(sys.argv) > 3:
+        if sys.argv[2] == "track" or sys.argv[2] == "song" or sys.argv[2] == "album":
+            start = 3
+            context = sys.argv[2][0]
+        else:
+            context = "t"
+            start = 2
+        for i in range(start, len(sys.argv)):
             query = query+" "+sys.argv[i]
     else:
+        context = "t"
         query = input("Search for: ")
     query.replace(" ", "%20")
     headers = {"Authorization": "Bearer "+accessToken}
-    r = requests.get("https://api.spotify.com/v1/search?q="+query+"&type=track", headers=headers)
+    if context == "a":
+        context = "album"
+    else:
+        context = "track"
+    r = requests.get("https://api.spotify.com/v1/search?q="+query+"&type="+context, headers=headers)
     if r.status_code == 204:
         print("No results")
         quit()
@@ -135,8 +146,12 @@ def spotSE():
         quit()
     json = r.json()
     try:
-        trackuri = json["tracks"]["items"][0]["uri"]
-        trackname = json["tracks"]["items"][0]["name"]
+        if context == "album":
+            uri = json["albums"]["items"][0]["uri"]
+            name = json["albums"]["items"][0]["name"]
+        elif context == "track":
+            uri = json["tracks"]["items"][0]["uri"]
+            name = json["tracks"]["items"][0]["name"]
     except:
         print("Search returned no results")
         quit()
@@ -165,12 +180,15 @@ def spotSE():
         deviceid = json["devices"][choice]["id"]
         devicename = json["devices"][choice]["name"]
 
-    payload = {"uris": [trackuri]}
+    if context == "album":
+        payload = {"context_uri": uri}
+    else:
+        payload = {"uris": [uri]}
     r = requests.put("https://api.spotify.com/v1/me/player/play?device_id="+deviceid, headers=headers, data=jsn.dumps(payload))
     if r.status_code == 204:
-        print("Playing \033[1m\033[95m"+trackname+"\033[0m on \033[1m\033[92m"+devicename+"\033[0m.")
+        print("Playing "+context+"\033[1m\033[95m "+name+"\033[0m on \033[1m\033[92m"+devicename+"\033[0m.")
     else:
-        print("Unable to play \033[1m\033[95m"+trackname+"\033[0m.")
+        print("Unable to play \033[1m\033[95m"+name+"\033[0m.")
     return r.status_code
 
 def spotSF():

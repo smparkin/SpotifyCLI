@@ -128,9 +128,19 @@ def spotSE():
             start = 2
         for i in range(start, len(sys.argv)):
             query = query+" "+sys.argv[i]
+    elif len(sys.argv) == 3:
+        if sys.argv[2] == "track" or sys.argv[2] == "song" or sys.argv[2] == "album":
+            context = sys.argv[2][0]
+            if context == "a":
+                query = input("Search for album: ")
+            else:
+                query = input("Search for track: ")
+        else:
+            context = "t"
+            query = input("Search for track: ")
     else:
         context = "t"
-        query = input("Search for: ")
+        query = input("Search for track: ")
     query.replace(" ", "%20")
     headers = {"Authorization": "Bearer "+accessToken}
     if context == "a":

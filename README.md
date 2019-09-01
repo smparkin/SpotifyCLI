@@ -10,15 +10,15 @@ Create secrets file in same directory as script<br/>
 `python3 spot.py <option>`
 
 ### Options
-- NP: now playing
-- SE: search
-- SF: shuffle
-- PR: previous
-- NE: next
-- PP: play/pause
-- LS: add to liked songs
-- AP: add to playlist
-- RP: remove from playlist
-- PD: change playback device
-- LP: play playlist from saved playlists
-- VL: volume
+- `status`: show now playing
+- `search <track/album> <query>`: search (defaults to track), if no query will ask for input
+- `shuffle`: toggle shuffle
+- `previous`: previous song
+- `next`: next song
+- `play`: toggle play/pause
+- `like`: add currently playing to liked songs
+- `playlist add`: add currently playing to playlist of choice
+- `playlist remove`: remove currently playing from choice of playlist
+- `device`: change playback device
+- `playlist play`: choose playlist to play from saved playlists
+- `volume <int>`: set volume to int (0-100)

@@ -8,18 +8,18 @@ import sys
 import time
 
 '''
-NP: now playing
-SE: search
-SF: shuffle
-PR: previous
-NE: next
-PP: play/pause
-LS: add to liked songs
-AP: add to playlist
-RP: remove from playlist
-PD: change playback device
-LP: play playlist from saved playlists
-VL: volume
+status: show now playing
+search <track/album> <query>: search (defaults to track), if no query will ask for input
+shuffle: toggle shuffle
+previous: previous song
+next: next song
+play: toggle play/pause
+like: add currently playing to liked songs
+playlist add: add currently playing to playlist of choice
+playlist remove: remove currently playing from choice of playlist
+device: change playback device
+playlist play: choose playlist to play from saved playlists
+volume <int>: set volume to int (0-100)
 
 create file called secrets in same folder as spot.py with app token on line 1 and refresh token on line 2
 '''
@@ -28,35 +28,48 @@ def main():
     try:
         arg = sys.argv[1]
     except:
-        arg = input("NP: now playing\nSE: search\nSF: shuffle\nPR: previous\nNE: next\nPP: play/pause\nLS: add to liked songs\nAP: add to playlist\nRP: remove from playlist\nPD: change playback device\nLP: play playlist from saved playlists\nVL: volume\nChoose one: ")
-    arg = arg.upper()
-    if arg == "NP":
+        print("Usage:\n   python3 spot.py <option>\n\nOptions:\n   status: show now playing\n   search <track/album> <query>: search (defaults to track), if no query will ask for input\n   shuffle: toggle shuffle\n   previous: previous song\n   next: next song\n   play: toggle play/pause\n   like: add currently playing to liked songs\n   playlist add: add currently playing to playlist of choice\n   playlist remove: remove currently playing from choice of playlist\n   device: change playback device\n   playlist play: choose playlist to play from saved playlists\n   volume <int>: set volume to int (0-100)\nChoose one: ")
+        quit()
+    arg = arg.lower()
+    if arg == "playlist":
+        try:
+            arg = sys.argv[2]
+        except:
+            arg = input("[0] add\n[1] remove\n[2] play\nChoose one: ")
+        if arg == "add" or arg == "0":
+            spotAP()
+        elif arg == "remove" or arg == "1":
+            spotRP()
+        elif arg == "play" or arg == "2":
+            spotPL()
+    elif arg == "np" or arg == "status":
         spotNP()
-    elif arg == "SE":
+    elif arg == "se" or arg == "search":
         spotSE()
-    elif arg == "SF":
+    elif arg == "sf" or arg == "shuffle":
         spotSF()
-    elif arg == "PR":
+    elif arg == "pr" or arg == "previous":
         spotPR()
-    elif arg == "NE":
+    elif arg == "ne" or arg == "next":
         spotNE()
-    elif arg == "PP":
+    elif arg == "pp" or arg == "play":
         spotPP()
-    elif arg == "LS":
+    elif arg == "ls" or arg == "like":
         spotLS()
-    elif arg == "AP":
+    elif arg == "ap":
         spotAP()
-    elif arg == "RP":
+    elif arg == "rp":
         spotRP()
-    elif arg == "PD":
+    elif arg == "pd" or arg == "device":
         spotPD()
-    elif arg == "PL":
+    elif arg == "lp":
         spotPL()
-    elif arg == "VL":
+    elif arg == "vl" or arg == "volume":
         spotVL()
     else:
-        print("Only use: NP, SE, SF, PR, NE, PP, LS, AP, RP, PD, LP, VL")
+        print("Usage:\n   python3 spot.py <option>\n\nOptions:\n   status: show now playing\n   search <track/album> <query>: search (defaults to track), if no query will ask for input\n   shuffle: toggle shuffle\n   previous: previous song\n   next: next song\n   play: toggle play/pause\n   like: add currently playing to liked songs\n   playlist add: add currently playing to playlist of choice\n   playlist remove: remove currently playing from choice of playlist\n   device: change playback device\n   playlist play: choose playlist to play from saved playlists\n   volume <int>: set volume to int (0-100)")
         quit()
+
 
 def spotAuth():
     f = open(sys.path[0]+"/secrets", "r")
@@ -71,6 +84,60 @@ def spotAuth():
     json = r.json()
     accessToken = json["access_token"]
     return accessToken
+
+
+def spotDevice(headers, caller):
+    r = requests.get("https://api.spotify.com/v1/me/player/devices", headers=headers)
+    json = r.json()
+    deviceid = None
+    if len(json["devices"]) == 0:
+        print("No playback devices")
+        quit()
+    elif len(json["devices"]) == 1:
+        deviceid = json["devices"][0]["id"]
+        devicename = json["devices"][0]["name"]
+        if caller == "dev":
+            print("\033[1m\033[92m"+devicename+"\033[0m is only device.")
+            quit()
+    elif caller == "vol":
+        for i in json["devices"]:
+            if i["is_active"] == True:
+                deviceid = i["id"]
+                devicename = i["name"]
+        if deviceid == None:
+            print("No active device")
+            quit()
+    elif caller == "dev":
+        j = 0
+        devicedict = {}
+        for i in json["devices"]:
+            if i["is_active"] == False:
+                print("["+str(j)+"] "+i["name"])
+                devicedict.update( {j: [i["name"], i["id"]]})
+                j += 1
+        choice = input("Choose device: ")
+        try:
+            choice = int(choice)
+        except:
+            quit()
+        deviceid = devicedict[choice][1]
+        devicename = devicedict[choice][0]
+    else:
+        for i in range(0,len(json["devices"])):
+            print("["+str(i)+"] "+json["devices"][i]["name"])
+        choice = input("Choose device: ")
+        try:
+            choice = int(choice)
+        except:
+            quit()
+        deviceid = json["devices"][choice]["id"]
+        devicename = json["devices"][choice]["name"]
+    
+    devicedict = {}
+    devicedict.update( {"deviceid": deviceid})
+    devicedict.update( {"devicename": devicename})
+    return devicedict
+
 
 def spotNP():
     accessToken = spotAuth()
@@ -115,6 +182,7 @@ def spotNP():
     imgcat.imgcat(im)
     print(str(round(currentSec//60))+":"+(str(round(currentSec%60))).zfill(2)+"/"+str(round(durationSec//60))+":"+(str(round(durationSec%60)).zfill(2)))
     return r.status_code
+
 
 def spotSE():
     accessToken = spotAuth()
@@ -166,40 +234,19 @@ def spotSE():
         print("Search returned no results")
         quit()
 
-    r = requests.get("https://api.spotify.com/v1/me/player/devices", headers=headers)
-    json = r.json()
-    deviceid = None
-    if len(json["devices"]) == 0:
-        print("No playback devices")
-        quit()
-    if len(json["devices"]) == 1:
-        deviceid = json["devices"][0]["id"]
-        devicename = json["devices"][0]["name"]
-    for i in json["devices"]:
-        if i["is_active"] == True:
-            deviceid = i["id"]
-            devicename = i["name"]
-    if deviceid == None:
-        for i in range(0,len(json["devices"])):
-            print("["+str(i)+"] "+json["devices"][i]["name"])
-        choice = input("Choose device: ")
-        try:
-            choice = int(choice)
-        except:
-            quit()
-        deviceid = json["devices"][choice]["id"]
-        devicename = json["devices"][choice]["name"]
+    dev = spotDevice(headers, "search")
 
     if context == "album":
         payload = {"context_uri": uri}
     else:
         payload = {"uris": [uri]}
-    r = requests.put("https://api.spotify.com/v1/me/player/play?device_id="+deviceid, headers=headers, data=jsn.dumps(payload))
+    r = requests.put("https://api.spotify.com/v1/me/player/play?device_id="+dev["deviceid"], headers=headers, data=jsn.dumps(payload))
     if r.status_code == 204:
-        print("Playing "+context+"\033[1m\033[95m "+name+"\033[0m on \033[1m\033[92m"+devicename+"\033[0m.")
+        print("Playing "+context+"\033[1m\033[95m "+name+"\033[0m on \033[1m\033[92m"+dev["devicename"]+"\033[0m.")
     else:
         print("Unable to play \033[1m\033[95m"+name+"\033[0m.")
     return r.status_code
+
 
 def spotSF():
     accessToken = spotAuth()
@@ -233,6 +280,7 @@ def spotSF():
         print("Unable to toggle shuffle.")
     return r.status_code
 
+
 def spotPR():
     accessToken = spotAuth()
     headers = {"Authorization": "Bearer "+accessToken}
@@ -247,29 +295,7 @@ def spotPR():
     trackname = json["item"]["name"]
     trackid = json["item"]["id"]
 
-    r = requests.get("https://api.spotify.com/v1/me/player/devices", headers=headers)
-    json = r.json()
-    deviceid = None
-    if len(json["devices"]) == 0:
-        print("No playback devices")
-        quit()
-    if len(json["devices"]) == 1:
-        deviceid = json["devices"][0]["id"]
-        devicename = json["devices"][0]["name"]
-    for i in json["devices"]:
-        if i["is_active"] == True:
-            deviceid = i["id"]
-            devicename = i["name"]
-    if deviceid == None:
-        for i in range(0,len(json["devices"])):
-            print("["+str(i)+"] "+json["devices"][i]["name"])
-        choice = input("Choose device: ")
-        try:
-            choice = int(choice)
-        except:
-            quit()
-        deviceid = json["devices"][choice]["id"]
-        devicename = json["devices"][choice]["name"]
+    dev = spotDevice(headers, "prev")
 
     r = requests.post("https://api.spotify.com/v1/me/player/previous", headers=headers)
     if r.status_code == 204:
@@ -284,10 +310,11 @@ def spotPR():
         json = r.json()
         trackname = json["item"]["name"]
         trackid = json["item"]["id"]
-        print("Playing \033[1m\033[95m"+trackname+"\033[0m on \033[1m\033[92m"+devicename+"\033[0m.")
+        print("Playing \033[1m\033[95m"+trackname+"\033[0m on \033[1m\033[92m"+dev["devicename"]+"\033[0m.")
     else:
         print("Unable to play \033[1m\033[95m"+trackname+"\033[0m.")
     return r.status_code
+
 
 def spotNE():
     accessToken = spotAuth()
@@ -303,29 +330,7 @@ def spotNE():
     trackname = json["item"]["name"]
     trackid = json["item"]["id"]
 
-    r = requests.get("https://api.spotify.com/v1/me/player/devices", headers=headers)
-    json = r.json()
-    deviceid = None
-    if len(json["devices"]) == 0:
-        print("No playback devices")
-        quit()
-    if len(json["devices"]) == 1:
-        deviceid = json["devices"][0]["id"]
-        devicename = json["devices"][0]["name"]
-    for i in json["devices"]:
-        if i["is_active"] == True:
-            deviceid = i["id"]
-            devicename = i["name"]
-    if deviceid == None:
-        for i in range(0,len(json["devices"])):
-            print("["+str(i)+"] "+json["devices"][i]["name"])
-        choice = input("Choose device: ")
-        try:
-            choice = int(choice)
-        except:
-            quit()
-        deviceid = json["devices"][choice]["id"]
-        devicename = json["devices"][choice]["name"]
+    dev = spotDevice(headers, "next")
 
     r = requests.post("https://api.spotify.com/v1/me/player/next", headers=headers)
     if r.status_code == 204:
@@ -340,38 +345,17 @@ def spotNE():
         json = r.json()
         trackname = json["item"]["name"]
         trackid = json["item"]["id"]
-        print("Playing \033[1m\033[95m"+trackname+"\033[0m on \033[1m\033[92m"+devicename+"\033[0m.")
+        print("Playing \033[1m\033[95m"+trackname+"\033[0m on \033[1m\033[92m"+dev["devicename"]+"\033[0m.")
     else:
         print("Unable to play \033[1m\033[95m"+trackname+"\033[0m.")
     return r.status_code
+
 
 def spotPP():
     accessToken = spotAuth()
     headers = {"Authorization": "Bearer "+accessToken}
 
-    r = requests.get("https://api.spotify.com/v1/me/player/devices", headers=headers)
-    json = r.json()
-    deviceid = None
-    if len(json["devices"]) == 0:
-        print("No playback devices")
-        quit()
-    if len(json["devices"]) == 1:
-        deviceid = json["devices"][0]["id"]
-        devicename = json["devices"][0]["name"]
-    for i in json["devices"]:
-        if i["is_active"] == True:
-            deviceid = i["id"]
-            devicename = i["name"]
-    if deviceid == None:
-        for i in range(0,len(json["devices"])):
-            print("["+str(i)+"] "+json["devices"][i]["name"])
-        choice = input("Choose device: ")
-        try:
-            choice = int(choice)
-        except:
-            quit()
-        deviceid = json["devices"][choice]["id"]
-        devicename = json["devices"][choice]["name"]
+    dev = spotDevice(headers, "play")
 
     r = requests.get("https://api.spotify.com/v1/me/player", headers=headers)
     try:
@@ -381,7 +365,7 @@ def spotPP():
         playing = False
 
     if playing == False:
-        r = requests.put("https://api.spotify.com/v1/me/player/play?device_id="+deviceid, headers=headers)
+        r = requests.put("https://api.spotify.com/v1/me/player/play?device_id="+dev["deviceid"], headers=headers)
         if r.status_code == 204:
             time.sleep(0.5)
             r = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
@@ -394,11 +378,11 @@ def spotPP():
             json = r.json()
             trackname = json["item"]["name"]
             trackid = json["item"]["id"]
-            print("Playing \033[1m\033[95m"+trackname+"\033[0m on \033[1m\033[92m"+devicename+"\033[0m.")
+            print("Playing \033[1m\033[95m"+trackname+"\033[0m on \033[1m\033[92m"+dev["devicename"]+"\033[0m.")
         else:
             print("No active devices")
     elif playing == True:
-        r = requests.put("https://api.spotify.com/v1/me/player/pause?device_id="+deviceid, headers=headers)
+        r = requests.put("https://api.spotify.com/v1/me/player/pause?device_id="+dev["deviceid"], headers=headers)
         if r.status_code == 204:
             r = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
             if r.status_code == 204:
@@ -410,10 +394,11 @@ def spotPP():
             json = r.json()
             trackname = json["item"]["name"]
             trackid = json["item"]["id"]
-            print("Paused \033[1m\033[95m"+trackname+"\033[0m on \033[1m\033[92m"+devicename+"\033[0m.")
+            print("Paused \033[1m\033[95m"+trackname+"\033[0m on \033[1m\033[92m"+dev["devicename"]+"\033[0m.")
         else:
             print("No active devices")
     return r.status_code
+
 
 def spotLS():
     accessToken = spotAuth()
@@ -436,6 +421,7 @@ def spotLS():
     else:
         print("An error occured, fun")
     return r.status_code
+
 
 def spotAP():
     accessToken = spotAuth()
@@ -486,35 +472,14 @@ def spotAP():
         print("Unable to add song to specified playlist. Do you have access to do so?")
     return r.status_code
 
+
 def spotPD():
     accessToken = spotAuth()
     headers = {"Authorization": "Bearer "+accessToken}
 
-    r = requests.get("https://api.spotify.com/v1/me/player/devices", headers=headers)
-    json = r.json()
-    if len(json["devices"]) == 0:
-        print("No playback devices")
-        quit()
-    if len(json["devices"]) == 1:
-        devicename = json["devices"][0]["name"]
-        print("\033[1m\033[92m"+devicename+"\033[0m is only device.")
-        quit()
-    j = 0
-    devicedict = {}
-    for i in json["devices"]:
-        if i["is_active"] == False:
-            print("["+str(j)+"] "+i["name"])
-            devicedict.update( {j: [i["name"], i["id"]]})
-            j += 1
-    choice = input("Choose device: ")
-    try:
-        choice = int(choice)
-    except:
-        quit()
-    deviceid = devicedict[choice][1]
-    devicename = devicedict[choice][0]
+    dev = spotDevice(headers, "dev")
 
-    payload = {"device_ids":[deviceid]}
+    payload = {"device_ids":[dev["deviceid"]]}
     r = requests.put("https://api.spotify.com/v1/me/player", headers=headers, data=jsn.dumps(payload))
     if r.status_code == 204:
         time.sleep(0.5)
@@ -528,10 +493,11 @@ def spotPD():
         json = r.json()
         trackname = json["item"]["name"]
         trackid = json["item"]["id"]
-        print("Playing \033[1m\033[95m"+trackname+"\033[0m on \033[1m\033[92m"+devicename+"\033[0m.")
+        print("Playing \033[1m\033[95m"+trackname+"\033[0m on \033[1m\033[92m"+dev["devicename"]+"\033[0m.")
     else:
         print("Unable to transfer playback.")
-    
+
+   
 def spotRP():
     accessToken = spotAuth()
     headers = {"Authorization": "Bearer "+accessToken}
@@ -581,6 +547,7 @@ def spotRP():
         print("Unable to remove song from specified playlist. Do you have access to do so?")
     return r.status_code
 
+
 def spotPL():
     accessToken = spotAuth()
     headers = {"Authorization": "Bearer "+accessToken}
@@ -602,32 +569,10 @@ def spotPL():
     playlistid = playdict[choice][1]
     playlistname = playdict[choice][0]
 
-    r = requests.get("https://api.spotify.com/v1/me/player/devices", headers=headers)
-    json = r.json()
-    deviceid = None
-    if len(json["devices"]) == 0:
-        print("No playback devices")
-        quit()
-    if len(json["devices"]) == 1:
-        deviceid = json["devices"][0]["id"]
-        devicename = json["devices"][0]["name"]
-    for i in json["devices"]:
-        if i["is_active"] == True:
-            deviceid = i["id"]
-            devicename = i["name"]
-    if deviceid == None:
-        for i in range(0,len(json["devices"])):
-            print("["+str(i)+"] "+json["devices"][i]["name"])
-        choice = input("Choose device: ")
-        try:
-            choice = int(choice)
-        except:
-            quit()
-        deviceid = json["devices"][choice]["id"]
-        devicename = json["devices"][choice]["name"]
+    dev = spotDevice(headers, "playlist play")
 
     payload = {"context_uri": "spotify:playlist:"+playlistid}
-    r = requests.put("https://api.spotify.com/v1/me/player/play?device_id="+deviceid, headers=headers, data=jsn.dumps(payload))
+    r = requests.put("https://api.spotify.com/v1/me/player/play?device_id="+dev["deviceid"], headers=headers, data=jsn.dumps(payload))
     if r.status_code == 204:
         time.sleep(0.5)
         r = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
@@ -640,37 +585,23 @@ def spotPL():
         json = r.json()
         trackname = json["item"]["name"]
         trackid = json["item"]["id"]
-        print("Playing \033[1m\033[95m"+trackname+"\033[0m on \033[1m\033[92m"+devicename+"\033[0m.")
+        print("Playing \033[1m\033[95m"+trackname+"\033[0m on \033[1m\033[92m"+dev["devicename"]+"\033[0m.")
     else:
         print("Unable to play \033[1m\033[95m"+trackname+"\033[0m.")
     return r.status_code
 
+
 def spotVL():
     accessToken = spotAuth()
     headers = {"Authorization": "Bearer "+accessToken}
- 
-    r = requests.get("https://api.spotify.com/v1/me/player/devices", headers=headers)
-    json = r.json()
-    deviceid = None
-    if len(json["devices"]) == 0:
-        print("No playback devices")
-        quit()
-    if len(json["devices"]) == 1:
-        deviceid = json["devices"][0]["id"]
-        devicename = json["devices"][0]["name"]
-    for i in json["devices"]:
-        if i["is_active"] == True:
-            deviceid = i["id"]
-            devicename = i["name"]
-    if deviceid == None:
-        print("No active device")
-        quit()
+
+    dev = spotDevice(headers, "vol")
 
     query = ""
     if len(sys.argv) > 2:
         query = sys.argv[2]
     else:
-        query = input("Change volume on \033[1m\033[92m"+devicename+"\033[0m [0-100]: ")
+        query = input("Change volume on \033[1m\033[92m"+dev["devicename"]+"\033[0m [0-100]: ")
     try:
         query = int(query)%101
     except:
@@ -679,7 +610,7 @@ def spotVL():
 
     r = requests.put("https://api.spotify.com/v1/me/player/volume?volume_percent="+str(query), headers=headers)
     if r.status_code == 204:
-        print("Volume on \033[1m\033[92m"+devicename+"\033[0m set to "+str(query))
+        print("Volume on \033[1m\033[92m"+dev["devicename"]+"\033[0m set to "+str(query))
     else:
         json = r.json()
         reason = json["error"]["reason"]

@@ -28,7 +28,7 @@ def main():
     try:
         arg = sys.argv[1]
     except:
-        print("Usage:\n   python3 spot.py <option>\n\nOptions:\n   status: show now playing\n   search <track/album> <query>: search (defaults to track), if no query will ask for input\n   shuffle: toggle shuffle\n   previous: previous song\n   next: next song\n   play: toggle play/pause\n   like: add currently playing to liked songs\n   playlist add: add currently playing to playlist of choice\n   playlist remove: remove currently playing from choice of playlist\n   device: change playback device\n   playlist play: choose playlist to play from saved playlists\n   volume <int>: set volume to int (0-100)\nChoose one: ")
+        print("Usage:\n   python3 spot.py <option>\n\nOptions:\n   status: show now playing\n   search <track/album> <query>: search (defaults to track), if no query will ask for input\n   shuffle: toggle shuffle\n   previous: previous song\n   next: next song\n   play: toggle play/pause\n   like: add currently playing to liked songs\n   playlist add: add currently playing to playlist of choice\n   playlist remove: remove currently playing from choice of playlist\n   device: change playback device\n   playlist play: choose playlist to play from saved playlists\n   volume <int>: set volume to int (0-100)")
         quit()
     arg = arg.lower()
     if arg == "playlist":

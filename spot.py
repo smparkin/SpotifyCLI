@@ -1,3 +1,4 @@
+import argparse
 import requests
 import json as jsn
 import urllib.request
@@ -6,6 +7,7 @@ import imgcat
 from PIL import Image
 import sys
 import time
+import traceback
 
 '''
 status: show now playing
@@ -24,52 +26,82 @@ volume <int>: set volume to int (0-100)
 create file called secrets in same folder as spot.py with app token on line 1 and refresh token on line 2
 '''
 
-def main():
-    try:
-        arg = sys.argv[1]
-    except:
-        print("Usage:\n   python3 spot.py <option>\n\nOptions:\n   status: show now playing\n   search <track/album> <query>: search (defaults to track), if no query will ask for input\n   shuffle: toggle shuffle\n   previous: previous song\n   next: next song\n   play: toggle play/pause\n   like: add currently playing to liked songs\n   playlist add: add currently playing to playlist of choice\n   playlist remove: remove currently playing from choice of playlist\n   device: change playback device\n   playlist play: choose playlist to play from saved playlists\n   volume <int>: set volume to int (0-100)")
-        quit()
-    arg = arg.lower()
-    if arg == "playlist":
-        try:
-            arg = sys.argv[2]
-        except:
-            arg = input("[0] add\n[1] remove\n[2] play\nChoose one: ")
-        if arg == "add" or arg == "0":
-            spotAP()
-        elif arg == "remove" or arg == "1":
-            spotRP()
-        elif arg == "play" or arg == "2":
-            spotPL()
-    elif arg == "np" or arg == "status":
-        spotNP()
-    elif arg == "se" or arg == "search":
-        spotSE()
-    elif arg == "sf" or arg == "shuffle":
-        spotSF()
-    elif arg == "pr" or arg == "previous":
-        spotPR()
-    elif arg == "ne" or arg == "next":
-        spotNE()
-    elif arg == "pp" or arg == "play":
-        spotPP()
-    elif arg == "ls" or arg == "like":
-        spotLS()
-    elif arg == "ap":
-        spotAP()
-    elif arg == "rp":
-        spotRP()
-    elif arg == "pd" or arg == "device":
-        spotPD()
-    elif arg == "lp":
-        spotPL()
-    elif arg == "vl" or arg == "volume":
-        spotVL()
-    else:
-        print("Usage:\n   python3 spot.py <option>\n\nOptions:\n   status: show now playing\n   search <track/album> <query>: search (defaults to track), if no query will ask for input\n   shuffle: toggle shuffle\n   previous: previous song\n   next: next song\n   play: toggle play/pause\n   like: add currently playing to liked songs\n   playlist add: add currently playing to playlist of choice\n   playlist remove: remove currently playing from choice of playlist\n   device: change playback device\n   playlist play: choose playlist to play from saved playlists\n   volume <int>: set volume to int (0-100)")
-        quit()
+def parse_arguments():
+    parser = argparse.ArgumentParser()
 
+    subparsers = parser.add_subparsers(dest='mode')
+
+    status = subparsers.add_parser('status', help='Show now playing')
+
+    playlist = subparsers.add_parser('playlist', help='Perform playlist-related operations')
+    playlist_operation = playlist.add_mutually_exclusive_group(required=True)
+    playlist_operation.add_argument('--add', action='store_true', help='add currently playing song to playlist of choice', default=False)
+    playlist_operation.add_argument('--remove', action='store_true', help='remove currently playing song from playlist of choice', default=False)
+    playlist_operation.add_argument('--play', action='store_true', help='choose a playlist to play from user-saved playlists', default=False)
+
+    search = subparsers.add_parser('search', help='Perform search-related operations')
+    search_track_or_album = search.add_mutually_exclusive_group(required=True)
+    search_track_or_album.add_argument('--track', action='store_true', help='Search for a specific track on Spotify', default=False)
+    search_track_or_album.add_argument('--album', action='store_true', help='Search for a specific album on Spotify', default=False)
+    search.add_argument('query', help='Search query')
+
+    playback = subparsers.add_parser('playback', help='Perform playback-related operations')
+    playback_operation = playback.add_mutually_exclusive_group(required=True)
+    playback_operation.add_argument('--shuffle', action='store_true', help='toggle shuffle', default=False)
+    playback_operation.add_argument('--previous', action='store_true', help='previous song', default=False)
+    playback_operation.add_argument('--next', action='store_true', help='next song', default=False)
+    playback_operation.add_argument('--play', action='store_true', help='toggle play/pause', default=False)
+    playback_operation.add_argument('--like', action='store_true', help='add currently playing song to liked songs', default=False)
+    playback_operation.add_argument('--volume', type=int, help='set volume to int (0-100)', default=50)
+
+    device = subparsers.add_parser('device', help='Change Playback device')
+
+    parser.add_argument('-u', '--usage', action='store_true', help='show usage')
+
+    args = parser.parse_args()
+
+    if args.mode is None or args.usage:
+        parser.print_usage()
+
+    return args
+
+def main():
+    args = parse_arguments()
+
+    if args.mode == 'status':
+        spotNP()
+    elif args.mode == 'playlist':
+        if args.add is True:
+            spotAP()
+        elif args.remove is True:
+            spotRP()
+        elif args.play is True:
+            spotPL()
+    elif args.mode == 'search':
+        if args.track is True:
+            context = 'track'
+        if args.album:
+            context = 'album'
+            query = args.album
+        if args.query:
+            query = args.query
+        else:
+            query = None
+
+        spotSE(context, query)
+    elif args.mode == 'playback':
+        if args.shuffle is True:
+            spotSF()
+        elif args.previous is True:
+            spotPR()
+        elif args.next is True:
+            spotNE()
+        elif args.play is True:
+            spotPP()
+        elif args.like is True:
+            spotLS()
+        elif args.volume:
+            spotVL(args.volume)
 
 def spotAuth():
     f = open(sys.path[0]+"/secrets", "r")
@@ -88,6 +120,9 @@ def spotAuth():
 
 def spotDevice(headers, caller):
     r = requests.get("https://api.spotify.com/v1/me/player/devices", headers=headers)
+    if r.status_code != 200:
+        print('Invalid permissions!')
+        quit()
     json = r.json()
     deviceid = None
     if len(json["devices"]) == 0:
@@ -144,10 +179,13 @@ def spotNP():
     headers = {"Authorization": "Bearer "+accessToken}
 
     r = requests.get("https://api.spotify.com/v1/me/player/devices", headers=headers)
-    json = r.json()
-    for i in json["devices"]:
-        if i["is_active"] == True:
-            devicename = i["name"]
+    if r.status_code == 200:
+      json = r.json()
+      for i in json["devices"]:
+          if i["is_active"] == True:
+              devicename = i["name"]
+    else:
+      devicename = 'INVALID PERMISSIONS'
 
     r = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
     if r.status_code == 204:
@@ -156,9 +194,6 @@ def spotNP():
     elif r.status_code != 200:
         print("Error: HTTP"+str(r.status_code))
         quit()
-    json = r.json()
- 
-    r = requests.get("https://api.spotify.com/v1/me/player", headers=headers)
     try:
         json = r.json()
         playing = json["is_playing"]
@@ -184,38 +219,13 @@ def spotNP():
     return r.status_code
 
 
-def spotSE():
+def spotSE(context, query):
     accessToken = spotAuth()
-    query = ""
-    if len(sys.argv) > 3:
-        if sys.argv[2] == "track" or sys.argv[2] == "song" or sys.argv[2] == "album":
-            start = 3
-            context = sys.argv[2][0]
-        else:
-            context = "t"
-            start = 2
-        for i in range(start, len(sys.argv)):
-            query = query+" "+sys.argv[i]
-    elif len(sys.argv) == 3:
-        if sys.argv[2] == "track" or sys.argv[2] == "song" or sys.argv[2] == "album":
-            context = sys.argv[2][0]
-            if context == "a":
-                query = input("Search for album: ")
-            else:
-                query = input("Search for track: ")
-        else:
-            context = "t"
-            query = input("Search for track: ")
-    else:
-        context = "t"
-        query = input("Search for track: ")
-    query.replace(" ", "%20")
     headers = {"Authorization": "Bearer "+accessToken}
-    if context == "a":
-        context = "album"
-    else:
-        context = "track"
-    r = requests.get("https://api.spotify.com/v1/search?q="+query+"&type="+context, headers=headers)
+
+    payload = {'type': context, 'q': query}
+
+    r = requests.get("https://api.spotify.com/v1/search", params=payload, headers=headers)
     if r.status_code == 204:
         print("No results")
         quit()
@@ -621,4 +631,12 @@ def spotVL():
     return r.status_code
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+        status = 0
+    except Exception as msg:
+        print('ERROR - {}'.format(msg))
+        traceback.print_exc()
+        status = -1
+
+    exit(status)

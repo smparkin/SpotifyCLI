@@ -17,10 +17,10 @@ previous: previous song
 next: next song
 play: toggle play/pause
 like: add currently playing to liked songs
-playlist add: add currently playing to playlist of choice
-playlist remove: remove currently playing from choice of playlist
+playlist --add: add currently playing to playlist of choice
+playlist --remove: remove currently playing from choice of playlist
 device: change playback device
-playlist play: choose playlist to play from saved playlists
+playlist --play: choose playlist to play from saved playlists
 volume <int>: set volume to int (0-100)
 
 create file called secrets in same folder as spot.py with app token on line 1 and refresh token on line 2
@@ -102,6 +102,9 @@ def main():
             spotLS()
         elif args.volume:
             spotVL(args.volume)
+
+    elif args.mode == 'device':
+        spotPD()
 
 def spotAuth():
     f = open(sys.path[0]+"/secrets", "r")
@@ -490,6 +493,7 @@ def spotPD():
     dev = spotDevice(headers, "dev")
 
     payload = {"device_ids":[dev["deviceid"]]}
+    print(dev["deviceid"])
     r = requests.put("https://api.spotify.com/v1/me/player", headers=headers, data=jsn.dumps(payload))
     if r.status_code == 204:
         time.sleep(0.5)

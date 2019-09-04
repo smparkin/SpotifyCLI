@@ -70,6 +70,7 @@ def main():
 
     if args.mode == 'status':
         spotNP()
+
     elif args.mode == 'playlist':
         if args.add is True:
             spotAP()
@@ -77,6 +78,7 @@ def main():
             spotRP()
         elif args.play is True:
             spotPL()
+
     elif args.mode == 'search':
         if args.track is True:
             context = 'track'
@@ -87,8 +89,8 @@ def main():
             query = args.query
         else:
             query = None
-
         spotSE(context, query)
+
     elif args.mode == 'playback':
         if args.shuffle is True:
             spotSF()

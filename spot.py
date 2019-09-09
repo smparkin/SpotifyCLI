@@ -139,7 +139,7 @@ def spotDevice(headers, caller):
         if caller == "dev":
             print("\033[1m\033[92m"+devicename+"\033[0m is only device.")
             quit()
-    elif caller == "vol":
+    elif caller == "vol" or caller == "prev" or caller == "next":
         for i in json["devices"]:
             if i["is_active"] == True:
                 deviceid = i["id"]

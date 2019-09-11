@@ -162,6 +162,21 @@ def spotDevice(headers, caller):
             quit()
         deviceid = devicedict[choice][1]
         devicename = devicedict[choice][0]
+    elif caller == "play":
+        for i in json["devices"]:
+            if i["is_active"] == True:
+                deviceid = i["id"]
+                devicename = i["name"]
+        if deviceid == None:
+            for i in range(0,len(json["devices"])):
+                print("["+str(i)+"] "+json["devices"][i]["name"])
+            choice = input("Choose device: ")
+            try:
+                choice = int(choice)
+            except:
+                quit()
+            deviceid = json["devices"][choice]["id"]
+            devicename = json["devices"][choice]["name"]
     else:
         for i in range(0,len(json["devices"])):
             print("["+str(i)+"] "+json["devices"][i]["name"])

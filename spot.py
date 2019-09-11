@@ -622,31 +622,26 @@ def spotPL():
     return r.status_code
 
 
-def spotVL():
+def spotVL(vol):
     accessToken = spotAuth()
     headers = {"Authorization": "Bearer "+accessToken}
 
     dev = spotDevice(headers, "vol")
 
-    query = ""
-    if len(sys.argv) > 2:
-        query = sys.argv[2]
-    else:
-        query = input("Change volume on \033[1m\033[92m"+dev["devicename"]+"\033[0m [0-100]: ")
     try:
-        query = int(query)%101
+        vol = int(vol)%101
     except:
         print("Only integers please.")
         quit()
 
-    r = requests.put("https://api.spotify.com/v1/me/player/volume?volume_percent="+str(query), headers=headers)
+    r = requests.put("https://api.spotify.com/v1/me/player/volume?volume_percent="+str(vol), headers=headers)
     if r.status_code == 204:
-        print("Volume on \033[1m\033[92m"+dev["devicename"]+"\033[0m set to "+str(query))
+        print("Volume on \033[1m\033[92m"+dev["devicename"]+"\033[0m set to "+str(vol))
     else:
         json = r.json()
         reason = json["error"]["reason"]
         if reason == "VOLUME_CONTROL_DISALLOW":
-            print("Current device does not allow volume to be controlled through API")
+            print("Device \033[1m\033[92m"+dev["devicename"]+"\033[0m does not allow volume to be controlled through API")
         else:
             print("No active playback devices")
     return r.status_code

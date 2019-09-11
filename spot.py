@@ -30,7 +30,7 @@ def parse_arguments():
     search_track_or_album = search.add_mutually_exclusive_group(required=True)
     search_track_or_album.add_argument('--track', action='store_true', help='Search for a specific track on Spotify', default=False)
     search_track_or_album.add_argument('--album', action='store_true', help='Search for a specific album on Spotify', default=False)
-    search.add_argument('query', help='Search query')
+    search.add_argument('query', nargs='+', help='Search query')
 
     playback = subparsers.add_parser('playback', help='Perform playback-related operations')
     playback_operation = playback.add_mutually_exclusive_group(required=True)
@@ -69,9 +69,8 @@ def main():
     elif args.mode == 'search':
         if args.track is True:
             context = 'track'
-        if args.album:
+        if args.album is True:
             context = 'album'
-            query = args.album
         if args.query:
             query = args.query
         else:
@@ -149,7 +148,7 @@ def spotDevice(headers, caller):
             quit()
         deviceid = devicedict[choice][1]
         devicename = devicedict[choice][0]
-    elif caller == "play":
+    elif caller == "play" or caller == "search":
         for i in json["devices"]:
             if i["is_active"] == True:
                 deviceid = i["id"]
@@ -230,6 +229,7 @@ def spotSE(context, query):
     accessToken = spotAuth()
     headers = {"Authorization": "Bearer "+accessToken}
 
+    query = ' '.join(query)
     payload = {'type': context, 'q': query}
 
     r = requests.get("https://api.spotify.com/v1/search", params=payload, headers=headers)

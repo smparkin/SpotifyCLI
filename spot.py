@@ -497,7 +497,6 @@ def spotPD():
     dev = spotDevice(headers, "dev")
 
     payload = {"device_ids":[dev["deviceid"]]}
-    print(dev["deviceid"])
     r = requests.put("https://api.spotify.com/v1/me/player", headers=headers, data=jsn.dumps(payload))
     if r.status_code == 204:
         time.sleep(0.5)

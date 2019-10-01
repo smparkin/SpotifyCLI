@@ -19,7 +19,8 @@ def parse_arguments():
     subparsers = parser.add_subparsers(dest='mode')
 
     status = subparsers.add_parser('status', help='Show now playing')
-    status_operation = status.add_argument('--imgcat', action='store_true', help='print album art with imgcat', default=False)
+    status.add_argument('--imgcat', action='store_true', help='print album art with imgcat', default=False)
+    status.add_argument('--time', action='store_true', help='print position in song', default=False)
 
     playlist = subparsers.add_parser('playlist', help='Perform playlist-related operations')
     playlist_operation = playlist.add_mutually_exclusive_group(required=True)
@@ -57,7 +58,7 @@ def main():
     args = parse_arguments()
 
     if args.mode == 'status':
-        spotNP(args.imgcat)
+        spotNP(args.imgcat, args.time)
 
     elif args.mode == 'playlist':
         if args.add is True:
@@ -181,7 +182,7 @@ def spotDevice(headers, caller):
     return devicedict
 
 
-def spotNP(imgcatBool):
+def spotNP(imgcatBool, timeBool):
     accessToken = spotAuth()
     headers = {"Authorization": "Bearer "+accessToken}
 
@@ -224,7 +225,8 @@ def spotNP(imgcatBool):
         im = np.asarray(Image.open(urllib.request.urlopen(imgurl)))
         time.sleep(1)
         imgcat.imgcat(im)
-    print(str(round(currentSec//60))+":"+(str(round(currentSec%60))).zfill(2)+"/"+str(round(durationSec//60))+":"+(str(round(durationSec%60)).zfill(2)))
+    if (timeBool):
+        print(str(round(currentSec//60))+":"+(str(round(currentSec%60))).zfill(2)+"/"+str(round(durationSec//60))+":"+(str(round(durationSec%60)).zfill(2)))
     return r.status_code
 
 

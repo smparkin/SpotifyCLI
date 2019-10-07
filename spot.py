@@ -516,7 +516,21 @@ def spotPD():
         trackname = json["item"]["name"]
         trackid = json["item"]["id"]
         print("Playing \033[1m\033[95m"+trackname+"\033[0m on \033[1m\033[92m"+dev["devicename"]+"\033[0m.")
+    elif r.status_code == 202:
+        time.sleep(2)
+        r = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
+        if r.status_code == 204:
+            print("No active playback session")
+            quit()
+        elif r.status_code != 200:
+            print("Error: HTTP"+str(r.status_code))
+            quit()
+        json = r.json()
+        trackname = json["item"]["name"]
+        trackid = json["item"]["id"]
+        print("Playing \033[1m\033[95m"+trackname+"\033[0m on \033[1m\033[92m"+dev["devicename"]+"\033[0m.")
     else:
+        print(r.status_code)
         print("Unable to transfer playback.")
 
    

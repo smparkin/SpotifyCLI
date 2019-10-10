@@ -41,6 +41,7 @@ def parse_arguments():
     playback_operation.add_argument('--next', action='store_true', help='next song', default=False)
     playback_operation.add_argument('--play', action='store_true', help='toggle play/pause', default=False)
     playback_operation.add_argument('--like', action='store_true', help='add currently playing song to liked songs', default=False)
+    playback_operation.add_argument('--unlike', action='store_true', help='remove currently playing song from liked songs', default=False)
     playback_operation.add_argument('--volume', type=int, help='set volume to int (0-100)', default=50)
 
     device = subparsers.add_parser('device', help='Change Playback device')
@@ -90,6 +91,8 @@ def main():
             spotPP()
         elif args.like is True:
             spotLS()
+        elif args.unlike is True:
+            spotRL()
         elif args.volume:
             spotVL(args.volume)
 
@@ -443,6 +446,27 @@ def spotLS():
     else:
         print("An error occured, fun")
     return r.status_code
+
+def spotRL():
+    accessToken = spotAuth()
+    headers = {"Authorization": "Bearer "+accessToken}
+    r = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
+    if r.status_code == 204:
+        print("Nothing playing")
+        quit()
+    elif r.status_code != 200:
+        print("Error: HTTP"+str(r.status_code))
+        quit()
+    json = r.json()
+    trackname = json["item"]["name"]
+    trackid = json["item"]["id"]
+
+    headers = {"Authorization": "Bearer "+accessToken, "Accept": "application/json", "Content-Type": "application/json"}
+    r = requests.delete("https://api.spotify.com/v1/me/tracks?ids="+trackid, headers=headers)
+    if r.status_code == 200:
+        print("Removed \033[1m\033[95m"+json["item"]["name"]+"\033[0m from Liked Songs")
+    else:
+        print("An error occured, fun")
 
 
 def spotAP():

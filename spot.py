@@ -94,9 +94,9 @@ def main():
             spotLS()
         elif args.unlike is True:
             spotRL()
-        elif args.seek:
+        elif args.seek or args.seek == 0:
             spotSK(args.seek)
-        elif args.volume:
+        elif args.volume or args.volume == 0:
             spotVL(args.volume)
 
     elif args.mode == 'device':
@@ -203,7 +203,7 @@ def spotSK(seekTime):
     durationMS = int(json["item"]["duration_ms"])
     seekMS = durationMS*(seekTime/4)
     seekMS = round(seekMS)
-    print(seekMS)
+
     r = requests.put("https://api.spotify.com/v1/me/player/seek?position_ms="+str(seekMS), headers=headers)
     if r.status_code == 204:
         print("Seeking to "+str((seekMS/1000)/60)+" minutes")

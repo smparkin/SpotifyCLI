@@ -36,13 +36,14 @@ def parse_arguments():
 
     playback = subparsers.add_parser('playback', help='Perform playback-related operations')
     playback_operation = playback.add_mutually_exclusive_group(required=True)
+    playback_operation.add_argument('--seek', type=float, help='seek <int>/4 into song')
     playback_operation.add_argument('--shuffle', action='store_true', help='toggle shuffle', default=False)
     playback_operation.add_argument('--previous', action='store_true', help='previous song', default=False)
     playback_operation.add_argument('--next', action='store_true', help='next song', default=False)
     playback_operation.add_argument('--play', action='store_true', help='toggle play/pause', default=False)
     playback_operation.add_argument('--like', action='store_true', help='add currently playing song to liked songs', default=False)
     playback_operation.add_argument('--unlike', action='store_true', help='remove currently playing song from liked songs', default=False)
-    playback_operation.add_argument('--volume', type=int, help='set volume to int (0-100)', default=50)
+    playback_operation.add_argument('--volume', type=int, help='set volume to int (0-100)')
 
     device = subparsers.add_parser('device', help='Change Playback device')
 
@@ -74,7 +75,7 @@ def main():
             context = 'track'
         if args.album is True:
             context = 'album'
-        if args.query:
+        if args.query is True:
             query = args.query
         else:
             query = None
@@ -93,6 +94,8 @@ def main():
             spotLS()
         elif args.unlike is True:
             spotRL()
+        elif args.seek:
+            spotSK(args.seek)
         elif args.volume:
             spotVL(args.volume)
 
@@ -130,7 +133,7 @@ def spotDevice(headers, caller):
         if caller == "dev":
             print("\033[1m\033[92m"+devicename+"\033[0m is only device.")
             quit()
-    elif caller == "vol" or caller == "prev" or caller == "next":
+    elif caller == "vol" or caller == "prev" or caller == "next" or caller == "np":
         for i in json["devices"]:
             if i["is_active"] == True:
                 deviceid = i["id"]
@@ -185,18 +188,36 @@ def spotDevice(headers, caller):
     return devicedict
 
 
+def spotSK(seekTime):
+    accessToken = spotAuth()
+    headers = {"Authorization": "Bearer "+accessToken}
+
+    r = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
+    if r.status_code == 204:
+        print("Nothing playing")
+        quit()
+    elif r.status_code != 200:
+        print("Error: HTTP"+str(r.status_code))
+        quit()
+    json = r.json()
+    durationMS = int(json["item"]["duration_ms"])
+    seekMS = durationMS*(seekTime/4)
+    seekMS = round(seekMS)
+    print(seekMS)
+    r = requests.put("https://api.spotify.com/v1/me/player/seek?position_ms="+str(seekMS), headers=headers)
+    if r.status_code == 204:
+        print("Seeking to "+str((seekMS/1000)/60)+" minutes")
+    else:
+        print("Error: HTTP"+str(r.status_code))
+    return r.status_code
+
+
 def spotNP(imgcatBool, timeBool):
     accessToken = spotAuth()
     headers = {"Authorization": "Bearer "+accessToken}
 
-    r = requests.get("https://api.spotify.com/v1/me/player/devices", headers=headers)
-    if r.status_code == 200:
-      json = r.json()
-      for i in json["devices"]:
-          if i["is_active"] == True:
-              devicename = i["name"]
-    else:
-      devicename = 'INVALID PERMISSIONS'
+    dev = spotDevice(headers, "np")
+    devicename = dev["devicename"]
 
     r = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
     if r.status_code == 204:

@@ -75,7 +75,7 @@ def main():
             context = 'track'
         if args.album is True:
             context = 'album'
-        if args.query is True:
+        if args.query:
             query = args.query
         else:
             query = None
@@ -257,7 +257,7 @@ def spotNP(imgcatBool, timeBool):
 def spotSE(context, query):
     accessToken = spotAuth()
     headers = {"Authorization": "Bearer "+accessToken}
-
+    print(query)
     query = ' '.join(query)
     payload = {'type': context, 'q': query}
 

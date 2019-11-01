@@ -38,6 +38,7 @@ def parse_arguments():
     playback_operation = playback.add_mutually_exclusive_group(required=True)
     playback_operation.add_argument('--seek', type=float, help='seek <int>/4 into song')
     playback_operation.add_argument('--shuffle', action='store_true', help='toggle shuffle', default=False)
+    playback_operation.add_argument('--repeat', action='store_true', help='toggle repeat', default=False)
     playback_operation.add_argument('--previous', action='store_true', help='previous song', default=False)
     playback_operation.add_argument('--next', action='store_true', help='next song', default=False)
     playback_operation.add_argument('--play', action='store_true', help='toggle play/pause', default=False)
@@ -84,6 +85,8 @@ def main():
     elif args.mode == 'playback':
         if args.shuffle is True:
             spotSF()
+        elif args.repeat is True:
+            spotRE()
         elif args.previous is True:
             spotPR()
         elif args.next is True:
@@ -257,7 +260,6 @@ def spotNP(imgcatBool, timeBool):
 def spotSE(context, query):
     accessToken = spotAuth()
     headers = {"Authorization": "Bearer "+accessToken}
-    print(query)
     query = ' '.join(query)
     payload = {'type': context, 'q': query}
 
@@ -324,6 +326,40 @@ def spotSF():
             print("Disabled shuffle.")
     else:
         print("Unable to toggle shuffle.")
+    return r.status_code
+
+def spotRE():
+    accessToken = spotAuth()
+    headers = {"Authorization": "Bearer "+accessToken}
+    r = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
+    if r.status_code == 204:
+        print("No active playback session")
+        quit()
+    elif r.status_code != 200:
+        print("Error: HTTP"+str(r.status_code))
+        quit()
+
+    r = requests.get("https://api.spotify.com/v1/me/player", headers=headers)
+    json = r.json()
+    rep = json["repeat_state"]
+    if rep == "context":
+        rep = "off"
+    elif rep == "off":
+        rep = "context"
+    else:
+        rep = "off"
+
+    r = requests.put("https://api.spotify.com/v1/me/player/repeat?state="+rep, headers=headers)
+    if r.status_code == 204:
+        r = requests.get("https://api.spotify.com/v1/me/player", headers=headers)
+        json = r.json()
+        currep = json["repeat_state"]
+        if currep == "context":
+            print("Enabled repeat.")
+        elif currep == "off":
+            print("Disabled repeat.")
+    else:
+        print("Unable to toggle repeat.")
     return r.status_code
 
 
@@ -704,5 +740,4 @@ if __name__ == "__main__":
         print('ERROR - {}'.format(msg))
         traceback.print_exc()
         status = -1
-
     exit(status)

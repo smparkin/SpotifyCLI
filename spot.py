@@ -53,7 +53,7 @@ def parse_arguments():
     args = parser.parse_args()
 
     if args.mode is None or args.usage:
-        parser.print_usage()
+        parser.print_help()
 
     return args
 
@@ -159,7 +159,7 @@ def spotDevice(headers, caller):
             quit()
         deviceid = devicedict[choice][1]
         devicename = devicedict[choice][0]
-    elif caller == "play" or caller == "search":
+    elif caller == "play" or caller == "search" or caller == "playlist play":
         for i in json["devices"]:
             if i["is_active"] == True:
                 deviceid = i["id"]
@@ -186,8 +186,8 @@ def spotDevice(headers, caller):
         devicename = json["devices"][choice]["name"]
     
     devicedict = {}
-    devicedict.update( {"deviceid": deviceid})
-    devicedict.update( {"devicename": devicename})
+    devicedict.update({"deviceid": deviceid})
+    devicedict.update({"devicename": devicename})
     return devicedict
 
 
@@ -702,7 +702,7 @@ def spotPL():
         json = r.json()
         trackname = json["item"]["name"]
         trackid = json["item"]["id"]
-        print("Playing \033[1m\033[95m"+trackname+"\033[0m on \033[1m\033[92m"+dev["devicename"]+"\033[0m.")
+        print("Playing \033[1m\033[95m"+trackname+"\033[0m from "+playlistname+" on \033[1m\033[92m"+dev["devicename"]+"\033[0m.")
     else:
         print("Unable to play \033[1m\033[95m"+trackname+"\033[0m.")
     return r.status_code

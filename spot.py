@@ -141,6 +141,7 @@ def spotDevice(headers, caller):
             if i["is_active"] == True:
                 deviceid = i["id"]
                 devicename = i["name"]
+                break
         if deviceid == None:
             print("No active device")
             quit()
@@ -209,7 +210,8 @@ def spotSK(seekTime):
 
     r = requests.put("https://api.spotify.com/v1/me/player/seek?position_ms="+str(seekMS), headers=headers)
     if r.status_code == 204:
-        print("Seeking to "+str((seekMS/1000)/60)+" minutes")
+        time.sleep(0.5)
+        spotNP(False, True)
     else:
         print("Error: HTTP"+str(r.status_code))
     return r.status_code
@@ -461,6 +463,7 @@ def spotLS():
         print("An error occured, fun")
     return r.status_code
 
+
 def spotRL():
     accessToken = spotAuth()
     headers = {"Authorization": "Bearer "+accessToken}
@@ -543,24 +546,10 @@ def spotPD():
     r = requests.put("https://api.spotify.com/v1/me/player", headers=headers, data=jsn.dumps(payload))
     if r.status_code == 204:
         time.sleep(0.5)
-        r = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
-        if r.status_code == 204:
-            print("No active playback session")
-            quit()
-        elif r.status_code != 200:
-            print("Error: HTTP"+str(r.status_code))
-            quit()
-        print("Switched to \033[1m\033[92m" + dev["devicename"] + "\033[0m.")
+        spotNP(False, False)
     elif r.status_code == 202:
         time.sleep(2)
-        r = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
-        if r.status_code == 204:
-            print("No active playback session")
-            quit()
-        elif r.status_code != 200:
-            print("Error: HTTP"+str(r.status_code))
-            quit()
-        print("Switched to \033[1m\033[92m" + dev["devicename"] + "\033[0m.")
+        spotNP(False, False)
     else:
         print(r.status_code)
         print("Unable to transfer playback.")

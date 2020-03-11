@@ -16,8 +16,6 @@ def parse_arguments():
     subparsers = parser.add_subparsers(dest='mode')
 
     status = subparsers.add_parser('status', help='Show now playing')
-    status.add_argument('--imgcat', action='store_true', help='print album art with imgcat', default=False)
-    status.add_argument('--time', action='store_true', help='print position in song', default=False)
 
     playlist = subparsers.add_parser('playlist', help='Perform playlist-related operations')
     playlist_operation = playlist.add_mutually_exclusive_group(required=True)

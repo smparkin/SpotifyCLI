@@ -56,7 +56,7 @@ def main():
     args = parse_arguments()
 
     if args.mode == 'status':
-        spotNP(args.imgcat, args.time)
+        spotNP()
 
     elif args.mode == 'playlist':
         if args.add is True:
@@ -206,13 +206,13 @@ def spotSK(seekTime):
     r = requests.put("https://api.spotify.com/v1/me/player/seek?position_ms="+str(seekMS), headers=headers)
     if r.status_code == 204:
         time.sleep(0.5)
-        spotNP(False, True)
+        spotNP()
     else:
         print("Error: HTTP"+str(r.status_code))
     return r.status_code
 
 
-def spotNP(imgcatBool, timeBool):
+def spotNP():
     accessToken = spotAuth()
     headers = {"Authorization": "Bearer "+accessToken}
 
@@ -373,7 +373,7 @@ def spotPR():
     r = requests.post("https://api.spotify.com/v1/me/player/previous", headers=headers)
     if r.status_code == 204:
         time.sleep(0.5)
-        spotNP(False, False)
+        spotNP()
     else:
         print("Unable to play \033[1m\033[95m"+trackname+"\033[0m.")
     return r.status_code
@@ -398,7 +398,7 @@ def spotNE():
     r = requests.post("https://api.spotify.com/v1/me/player/next", headers=headers)
     if r.status_code == 204:
         time.sleep(0.5)
-        spotNP(False, False)
+        spotNP()
     else:
         print("Unable to play \033[1m\033[95m"+trackname+"\033[0m.")
     return r.status_code
@@ -421,12 +421,12 @@ def spotPP():
         r = requests.put("https://api.spotify.com/v1/me/player/play?device_id="+dev["deviceid"], headers=headers)
         if r.status_code == 204:
             time.sleep(0.5)
-            spotNP(False, False)
+            spotNP()
     elif playing == True:
         r = requests.put("https://api.spotify.com/v1/me/player/pause?device_id="+dev["deviceid"], headers=headers)
         if r.status_code == 204:
             time.sleep(0.5)
-            spotNP(False, False)
+            spotNP()
     return r.status_code
 
 
@@ -535,10 +535,10 @@ def spotPD():
     r = requests.put("https://api.spotify.com/v1/me/player", headers=headers, data=jsn.dumps(payload))
     if r.status_code == 204:
         time.sleep(0.5)
-        spotNP(False, False)
+        spotNP()
     elif r.status_code == 202:
         time.sleep(2)
-        spotNP(False, False)
+        spotNP()
     else:
         print(r.status_code)
         print("Unable to transfer playback.")

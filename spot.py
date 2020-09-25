@@ -1,3 +1,4 @@
+#!python3
 import argparse
 import requests
 import json as jsn
@@ -30,9 +31,12 @@ def parse_arguments():
 
     search = subparsers.add_parser('search', help='Perform search-related operations')
     search_track_or_album = search.add_mutually_exclusive_group(required=True)
-    search_track_or_album.add_argument('--track', action='store_true', help='Search for a specific track on Spotify', default=False)
-    search_track_or_album.add_argument('--album', action='store_true', help='Search for a specific album on Spotify', default=False)
+    search_track_or_album.add_argument('--track', action='store_true', help='Search for a specific track on Spotify and play it', default=False)
+    search_track_or_album.add_argument('--album', action='store_true', help='Search for a specific album on Spotify and play it', default=False)
     search.add_argument('query', nargs='+', help='Search query')
+
+    queue = subparsers.add_parser('queue', help='Perform query-related operations')
+    queue.add_argument('query', nargs='+', help='Search query')
 
     playback = subparsers.add_parser('playback', help='Perform playback-related operations')
     playback_operation = playback.add_mutually_exclusive_group(required=True)
@@ -81,6 +85,13 @@ def main():
         else:
             query = None
         spotSE(context, query)
+    
+    elif args.mode == 'queue':
+        if args.query:
+            query = args.query
+        else:
+            query = None
+        spotQU(query)
 
     elif args.mode == 'playback':
         if args.shuffle is True:
@@ -160,7 +171,7 @@ def spotDevice(headers, caller):
             quit()
         deviceid = devicedict[choice][1]
         devicename = devicedict[choice][0]
-    elif caller == "play" or caller == "search" or caller == "playlist play":
+    elif caller == "play" or caller == "search" or caller == "playlist play" or caller == "queue":
         for i in json["devices"]:
             if i["is_active"] == True:
                 deviceid = i["id"]
@@ -685,6 +696,40 @@ def spotVL(vol):
         else:
             print("No active playback devices")
     return r.status_code
+
+
+def spotQU(query):
+    accessToken = spotAuth()
+    headers = {"Authorization": "Bearer "+accessToken}
+    query = ' '.join(query)
+    payload = {'type': "track", 'q': query}
+
+    r = requests.get("https://api.spotify.com/v1/search", params=payload, headers=headers)
+    if r.status_code == 204:
+        print("No results")
+        quit()
+    elif r.status_code != 200:
+        print("Error: HTTP"+str(r.status_code))
+        quit()
+    json = r.json()
+    try:
+        uri = json["tracks"]["items"][0]["uri"]
+        name = json["tracks"]["items"][0]["name"]
+    except:
+        print("Search returned no results")
+        quit()
+
+    dev = spotDevice(headers, "queue")
+
+    params = {"uri": uri, "device_id": dev["deviceid"]}
+
+    r = requests.post("https://api.spotify.com/v1/me/player/queue", headers=headers, params=params)
+    if r.status_code == 204:
+        print("Queued \033[1m\033[95m"+name+"\033[0m on \033[1m\033[92m"+dev["devicename"]+"\033[0m.")
+    else:
+        print(r.status_code)
+        print("Unable to queue \033[1m\033[95m"+name+"\033[0m.")
+
 
 if __name__ == "__main__":
     try:
